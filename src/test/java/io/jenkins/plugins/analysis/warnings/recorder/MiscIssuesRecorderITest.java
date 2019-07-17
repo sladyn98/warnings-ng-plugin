@@ -236,6 +236,23 @@ public class MiscIssuesRecorderITest extends IntegrationTestWithJenkinsPerSuite 
     }
 
     /**
+     * Verifies that a report that contains errors (since the report pattern does not find some files),
+     * will fail the build if the property {@link IssuesRecorder#setFailOnError(boolean)} is enabled.
+     */
+    @Test @org.jvnet.hudson.test.Issue("JENKINS-58056")
+    public void shouldFailBuildWhenFailBuildOnErrorsIsSet() {
+        FreeStyleProject job = createFreeStyleProject();
+        IssuesRecorder recorder = enableEclipseWarnings(job);
+        scheduleBuildAndAssertStatus(job, Result.SUCCESS);
+
+        recorder.setFailOnError(true);
+
+        AnalysisResult result = scheduleBuildAndAssertStatus(job, Result.FAILURE);
+        assertThat(result).hasErrorMessages("No files found for pattern '**/*issues.txt'. Configuration error?");
+        assertThat(getConsoleLog(result)).contains("Failing build because analysis result contains errors");
+    }
+
+    /**
      * Enables CheckStyle tool twice for two different files with varying amount of issues: should produce a failure.
      */
     @Test

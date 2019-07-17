@@ -39,11 +39,12 @@ import io.jenkins.plugins.analysis.core.model.ResultAction;
 import io.jenkins.plugins.analysis.core.model.StaticAnalysisLabelProvider;
 import io.jenkins.plugins.analysis.core.model.Tool;
 import io.jenkins.plugins.analysis.core.util.ModelValidation;
+import io.jenkins.plugins.analysis.core.util.PipelineResultHandler;
 import io.jenkins.plugins.analysis.core.util.QualityGate;
 import io.jenkins.plugins.analysis.core.util.QualityGate.QualityGateResult;
 import io.jenkins.plugins.analysis.core.util.QualityGate.QualityGateType;
 import io.jenkins.plugins.analysis.core.util.QualityGateEvaluator;
-import io.jenkins.plugins.analysis.core.util.QualityGateStatusHandler;
+import io.jenkins.plugins.analysis.core.util.StageResultHandler;
 
 /**
  * Pipeline step that scans report files or the console log for issues. Stores the created
@@ -89,6 +90,8 @@ public class RecordIssuesStep extends Step implements Serializable {
 
     private List<QualityGate> qualityGates = new ArrayList<>();
 
+    private boolean failOnError;
+
     /**
      * Creates a new instance of {@link RecordIssuesStep}.
      */
@@ -128,6 +131,406 @@ public class RecordIssuesStep extends Step implements Serializable {
     @SuppressWarnings({"unused", "WeakerAccess"}) // used by Stapler view data binding
     public List<QualityGate> getQualityGates() {
         return qualityGates;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setUnstableTotalAll(final int size) {
+        addQualityGate(size, QualityGateType.TOTAL, QualityGateResult.UNSTABLE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getUnstableTotalAll() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setUnstableTotalHigh(final int size) {
+        addQualityGate(size, QualityGateType.TOTAL_HIGH, QualityGateResult.UNSTABLE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getUnstableTotalHigh() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setUnstableNewAll(final int size) {
+        addQualityGate(size, QualityGateType.NEW, QualityGateResult.UNSTABLE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getUnstableNewAll() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setUnstableTotalNormal(final int size) {
+        addQualityGate(size, QualityGateType.TOTAL_NORMAL, QualityGateResult.UNSTABLE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getUnstableTotalNormal() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setUnstableTotalLow(final int size) {
+        addQualityGate(size, QualityGateType.TOTAL_LOW, QualityGateResult.UNSTABLE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getUnstableTotalLow() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setUnstableNewHigh(final int size) {
+        addQualityGate(size, QualityGateType.NEW_HIGH, QualityGateResult.UNSTABLE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getUnstableNewHigh() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setUnstableNewNormal(final int size) {
+        addQualityGate(size, QualityGateType.NEW_NORMAL, QualityGateResult.UNSTABLE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getUnstableNewNormal() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setUnstableNewLow(final int size) {
+        addQualityGate(size, QualityGateType.NEW_LOW, QualityGateResult.UNSTABLE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getUnstableNewLow() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setFailedTotalAll(final int size) {
+        addQualityGate(size, QualityGateType.TOTAL, QualityGateResult.FAILURE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getFailedTotalAll() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setFailedTotalHigh(final int size) {
+        addQualityGate(size, QualityGateType.TOTAL_HIGH, QualityGateResult.FAILURE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getFailedTotalHigh() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setFailedTotalNormal(final int size) {
+        addQualityGate(size, QualityGateType.TOTAL_NORMAL, QualityGateResult.FAILURE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getFailedTotalNormal() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setFailedTotalLow(final int size) {
+        addQualityGate(size, QualityGateType.TOTAL_LOW, QualityGateResult.FAILURE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getFailedTotalLow() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setFailedNewAll(final int size) {
+        addQualityGate(size, QualityGateType.NEW, QualityGateResult.FAILURE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getFailedNewAll() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setFailedNewHigh(final int size) {
+        addQualityGate(size, QualityGateType.NEW_HIGH, QualityGateResult.FAILURE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getFailedNewHigh() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setFailedNewNormal(final int size) {
+        addQualityGate(size, QualityGateType.NEW_NORMAL, QualityGateResult.FAILURE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getFailedNewNormal() {
+        return 0;
+    }
+
+    /**
+     * Sets the quality gate.
+     *
+     * @param size
+     *         number of issues
+     *
+     * @deprecated replaced by {@link RecordIssuesStep#addQualityGate(int, QualityGate.QualityGateType, QualityGate.QualityGateResult)}
+     */
+    @Deprecated
+    @DataBoundSetter
+    public void setFailedNewLow(final int size) {
+        addQualityGate(size, QualityGateType.NEW_LOW, QualityGateResult.FAILURE);
+    }
+
+    /**
+     * Gets the quality gate.
+     *
+     * @return 0
+     * @deprecated replaced by {@link RecordIssuesStep#getQualityGates()}
+     */
+    @Deprecated
+    public int getFailedNewLow() {
+        return 0;
     }
 
     /**
@@ -377,6 +780,24 @@ public class RecordIssuesStep extends Step implements Serializable {
     }
 
     /**
+     * Determines whether to fail the build on errors during the step of recording issues.
+     *
+     * @param failOnError
+     *         if {@code true} then the build will be failed on errors, {@code false} then errors are only reported in
+     *         the UI
+     */
+    @DataBoundSetter
+    @SuppressWarnings("unused") // Used by Stapler
+    public void setFailOnError(final boolean failOnError) {
+        this.failOnError = failOnError;
+    }
+
+    @SuppressWarnings({"PMD.BooleanGetMethodName", "WeakerAccess"})
+    public boolean getFailOnError() {
+        return failOnError;
+    }
+
+    /**
      * Sets the reference job to get the results for the issue difference computation.
      *
      * @param referenceJobName
@@ -494,8 +915,9 @@ public class RecordIssuesStep extends Step implements Serializable {
             recorder.setId(step.getId());
             recorder.setName(step.getName());
             recorder.setQualityGates(step.getQualityGates());
+            recorder.setFailOnError(step.getFailOnError());
 
-            QualityGateStatusHandler statusHandler = new QualityGateStatusHandler.PipelineStatusHandler(getRun(),
+            StageResultHandler statusHandler = new PipelineResultHandler(getRun(),
                     getContext().get(FlowNode.class));
 
             FilePath workspace = getWorkspace();

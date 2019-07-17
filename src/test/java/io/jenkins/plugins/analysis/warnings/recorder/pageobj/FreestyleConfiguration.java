@@ -25,6 +25,7 @@ public class FreestyleConfiguration extends PageObject {
     private static final String IGNORE_QUALITY_GATE = "_.ignoreQualityGate";
     private static final String IGNORE_FAILED_BUILDS = "_.ignoreFailedBuilds";
     private static final String REFERENCE_JOB_NAME = "_.referenceJobName";
+    private static final String FAIL_ON_ERROR = "_.failOnError";
 
     private static final String HEALTHY = "_.healthy";
     private static final String UNHEALTHY = "_.unhealthy";
@@ -105,6 +106,24 @@ public class FreestyleConfiguration extends PageObject {
         setChecked(BLAME_DISABLED, blameDisabled);
 
         return this;
+    }
+
+    /**
+     * Determines whether to fail the build on errors during the step of recording issues.
+     *
+     * @param failOnError
+     *         if {@code true} then the build will be failed on errors, {@code false} then errors are only reported in
+     *         the UI
+     *
+     * @return this
+     */
+    public FreestyleConfiguration setFailOnError(final boolean failOnError) {
+        setChecked(FAIL_ON_ERROR, failOnError);
+        return this;
+    }
+
+    public boolean mustFailOnError() {
+        return isChecked(FAIL_ON_ERROR);
     }
 
     public boolean isBlameDisabled() {

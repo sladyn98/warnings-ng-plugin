@@ -1,3 +1,4 @@
+
 package io.jenkins.plugins.analysis.core.steps;
 
 import java.io.IOException;
@@ -43,9 +44,7 @@ import io.jenkins.plugins.analysis.core.model.HealthReportBuilder;
 import io.jenkins.plugins.analysis.core.model.ResultAction;
 import io.jenkins.plugins.analysis.core.model.StaticAnalysisLabelProvider;
 import io.jenkins.plugins.analysis.core.model.Tool;
-import io.jenkins.plugins.analysis.core.scm.BlameFactory;
-import io.jenkins.plugins.analysis.core.scm.Blamer;
-import io.jenkins.plugins.analysis.core.scm.NullBlamer;
+import io.jenkins.plugins.analysis.core.steps.IssuesScanner.BlameMode;
 import io.jenkins.plugins.analysis.core.util.HealthDescriptor;
 import io.jenkins.plugins.analysis.core.util.LogHandler;
 import io.jenkins.plugins.analysis.core.util.ModelValidation;
@@ -53,7 +52,8 @@ import io.jenkins.plugins.analysis.core.util.QualityGate;
 import io.jenkins.plugins.analysis.core.util.QualityGate.QualityGateResult;
 import io.jenkins.plugins.analysis.core.util.QualityGate.QualityGateType;
 import io.jenkins.plugins.analysis.core.util.QualityGateEvaluator;
-import io.jenkins.plugins.analysis.core.util.QualityGateStatusHandler;
+import io.jenkins.plugins.analysis.core.util.RunResultHandler;
+import io.jenkins.plugins.analysis.core.util.StageResultHandler;
 
 /**
  * Freestyle or Maven job {@link Recorder} that scans report files or the console log for issues. Stores the created
@@ -84,6 +84,7 @@ public class IssuesRecorder extends Recorder {
     private boolean ignoreQualityGate = false; // by default, a successful quality gate is mandatory;
     private boolean ignoreFailedBuilds = true; // by default, failed builds are ignored;
     private String referenceJobName;
+    private boolean failOnError = false;
 
     private int healthy;
     private int unhealthy;
@@ -100,6 +101,7 @@ public class IssuesRecorder extends Recorder {
     private String name;
 
     private List<QualityGate> qualityGates = new ArrayList<>();
+
 
     /**
      * Creates a new instance of {@link IssuesRecorder}.
@@ -314,6 +316,24 @@ public class IssuesRecorder extends Recorder {
     }
 
     /**
+     * Determines whether to fail the build on errors during the step of recording issues.
+     *
+     * @param failOnError
+     *         if {@code true} then the build will be failed on errors, {@code false} then errors are only reported in
+     *         the UI
+     */
+    @DataBoundSetter
+    @SuppressWarnings("unused") // Used by Stapler
+    public void setFailOnError(final boolean failOnError) {
+        this.failOnError = failOnError;
+    }
+
+    @SuppressWarnings({"PMD.BooleanGetMethodName", "unused"})
+    public boolean getFailOnError() {
+        return failOnError;
+    }
+
+    /**
      * Returns whether recording should be enabled for failed builds as well.
      *
      * @return {@code true}  if recording should be enabled for failed builds as well, {@code false} if recording is
@@ -466,18 +486,18 @@ public class IssuesRecorder extends Recorder {
         if (workspace == null) {
             throw new IOException("No workspace found for " + build);
         }
-        perform(build, workspace, listener, new QualityGateStatusHandler.SetBuildResultStatusHandler(build));
+
+        perform(build, workspace, listener, new RunResultHandler(build));
 
         return true;
     }
 
     /**
-     * Executes the build step. Used from {@link RecordIssuesStep} to provide a {@link QualityGateStatusHandler}
+     * Executes the build step. Used from {@link RecordIssuesStep} to provide a {@link StageResultHandler}
      * that has Pipeline-specific behavior.
      */
-    void perform(@NonNull final Run<?, ?> run, @NonNull final FilePath workspace,
-            @NonNull final TaskListener listener, @NonNull final QualityGateStatusHandler statusHandler)
-            throws InterruptedException, IOException {
+    void perform(final Run<?, ?> run, final FilePath workspace, final TaskListener listener,
+            final StageResultHandler statusHandler) throws InterruptedException, IOException {
         Result overallResult = run.getResult();
         if (isEnabledForFailure || overallResult == null || overallResult.isBetterOrEqualTo(Result.UNSTABLE)) {
             record(run, workspace, listener, statusHandler);
@@ -493,7 +513,7 @@ public class IssuesRecorder extends Recorder {
     }
 
     private void record(final Run<?, ?> run, final FilePath workspace, final TaskListener listener,
-            final QualityGateStatusHandler statusHandler)
+            final StageResultHandler statusHandler)
             throws IOException, InterruptedException {
         if (isAggregatingResults && analysisTools.size() > 1) {
             AnnotatedReport totalIssues = new AnnotatedReport(StringUtils.defaultIfEmpty(id, "analysis"));
@@ -540,16 +560,10 @@ public class IssuesRecorder extends Recorder {
 
     private AnnotatedReport scanWithTool(final Run<?, ?> run, final FilePath workspace, final TaskListener listener,
             final Tool tool) throws IOException, InterruptedException {
-        IssuesScanner issuesScanner = new IssuesScanner(tool, getFilters(),
-                getSourceCodeCharset(), new FilePath(run.getRootDir()), blame(run, workspace, listener));
-        return issuesScanner.scan(run, workspace, new LogHandler(listener, tool.getActualName()));
-    }
+        IssuesScanner issuesScanner = new IssuesScanner(tool, getFilters(), getSourceCodeCharset(), workspace, run,
+                new FilePath(run.getRootDir()), listener, isBlameDisabled ? BlameMode.DISABLED : BlameMode.ENABLED);
 
-    private Blamer blame(final Run<?, ?> run, final FilePath workspace, final TaskListener listener) {
-        if (isBlameDisabled) {
-            return new NullBlamer();
-        }
-        return BlameFactory.createBlamer(run, workspace, listener);
+        return issuesScanner.scan();
     }
 
     private Charset getSourceCodeCharset() {
@@ -577,7 +591,7 @@ public class IssuesRecorder extends Recorder {
      */
     @SuppressWarnings("deprecation")
     void publishResult(final Run<?, ?> run, final TaskListener listener, final String loggerName,
-            final AnnotatedReport report, final String reportName, final QualityGateStatusHandler statusHandler) {
+            final AnnotatedReport report, final String reportName, final StageResultHandler statusHandler) {
         QualityGateEvaluator qualityGate = new QualityGateEvaluator();
         if (qualityGates.isEmpty()) {
             qualityGates.addAll(QualityGate.map(thresholds));
@@ -586,7 +600,7 @@ public class IssuesRecorder extends Recorder {
         IssuesPublisher publisher = new IssuesPublisher(run, report,
                 new HealthDescriptor(healthy, unhealthy, minimumSeverity), qualityGate,
                 reportName, referenceJobName, ignoreQualityGate, ignoreFailedBuilds, getSourceCodeCharset(),
-                new LogHandler(listener, loggerName, report.getReport()), statusHandler);
+                new LogHandler(listener, loggerName, report.getReport()), statusHandler, failOnError);
         publisher.attachAction();
     }
 
@@ -1001,7 +1015,7 @@ public class IssuesRecorder extends Recorder {
     /**
      * Descriptor for this step: defines the context and the UI elements.
      */
-    @Extension @Symbol("recordFreeStyleIssues")
+    @Extension @Symbol("recordIssues")
     @SuppressWarnings("unused") // most methods are used by the corresponding jelly view
     public static class Descriptor extends BuildStepDescriptor<Publisher> {
         /** Retain backward compatibility. */

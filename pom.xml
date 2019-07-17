@@ -5,14 +5,14 @@
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
     <version>3.43</version>
-    <relativePath/>
+    <relativePath />
   </parent>
 
   <groupId>io.jenkins.plugins</groupId>
   <artifactId>warnings-ng</artifactId>
   <packaging>hpi</packaging>
   <name>Warnings Next Generation Plugin</name>
-  <version>5.2.0-SNAPSHOT</version>
+  <version>6.0.0-SNAPSHOT</version>
   <url>https://wiki.jenkins.io/x/1YTeCQ</url>
   <description>Jenkins Warnings Next Generation plugin collects compiler warnings or issues reported by static
     analysis tools and visualizes the results. It has built-in support for numerous static analysis tools
@@ -28,8 +28,10 @@
     <jenkins-test-harness.version>2.49</jenkins-test-harness.version>
 
     <!-- Project Dependencies Configuration -->
-    <analysis-model-api.version>5.1.1</analysis-model-api.version>
-    <analysis-model.version>5.1.1</analysis-model.version>
+    <analysis-model-api.version>5.2.0</analysis-model-api.version>
+    <analysis-model.version>5.2.0</analysis-model.version>
+    <forensics-api-plugin.version>0.1.1</forensics-api-plugin.version>
+    <git-forensics-plugin.version>0.1.0</git-forensics-plugin.version>
 
     <spotbugs.annotations>3.1.12</spotbugs.annotations>
     <commons.lang.version>3.9</commons.lang.version>
@@ -69,6 +71,7 @@
     <dashboard-view.version>2.9.4</dashboard-view.version>
     <script-security.version>1.58</script-security.version>
     <folder-plugin.version>6.1.2</folder-plugin.version>
+    <credentials.version>2.1.14</credentials.version>
 
     <!-- Maven plug-in versions -->
     <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
@@ -161,6 +164,11 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
         <version>${commons.lang.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>ssh-credentials</artifactId>
+        <version>1.13</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -294,6 +302,11 @@
       <artifactId>antisamy-markup-formatter</artifactId>
       <version>${antisamy-markup-formatter.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>credentials</artifactId>
+      <version>${credentials.version}</version>
+    </dependency>
 
     <!-- Optional Jenkins Plug-in Dependencies -->
     <dependency>
@@ -309,10 +322,15 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.jenkins-ci.plugins</groupId>
-      <artifactId>git</artifactId>
-      <version>${git-plugin.version}</version>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>git-forensics</artifactId>
+      <version>${git-forensics-plugin.version}</version>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>forensics-api</artifactId>
+      <version>${forensics-api-plugin.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
@@ -322,6 +340,13 @@
     </dependency>
 
     <!-- Test Dependencies -->
+    <dependency>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>forensics-api</artifactId>
+      <version>${forensics-api-plugin.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
@@ -957,14 +982,14 @@
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
+      <url>https://repo.jenkins-ci.org/public/</url>
     </repository>
   </repositories>
 
   <pluginRepositories>
     <pluginRepository>
       <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
+      <url>https://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
 

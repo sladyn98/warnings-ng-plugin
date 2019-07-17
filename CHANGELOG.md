@@ -4,9 +4,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/jenkinsci/warnings-ng-plugin/compare/warnings-ng-5.0.0...master)
+## [Unreleased](https://github.com/jenkinsci/warnings-ng-plugin/compare/warnings-ng-5.2.0...master)
+
+### Fixed
+- [JENKINS-57709](https://issues.jenkins-ci.org/browse/JENKINS-57709): Fixed class loading problems if Git plugin
+is not installed.
 
 ### Added 
+
+- [JENKINS-58056](https://issues.jenkins-ci.org/browse/JENKINS-58056),
+  [PR#113](https://github.com/jenkinsci/warnings-ng-plugin/pull/113): Added option to fail a build if errors have been 
+  reported during the execution of the issues recording step.
+
+### Removed
+
+- Removed dependency to Git plugin. Now all code required to invoke Git blame for all affected files
+has been moved to the new Jenkins plugins [forensics-api](https://github.com/jenkinsci/forensics-api-plugin) and 
+[git-forensics](https://github.com/jenkinsci/git-forensics-plugin). All SCM and Git related classes (blame)
+have been removed as well.
+  
+## [5.3.0](https://github.com/jenkinsci/warnings-ng-plugin/compare/warnings-ng-5.2.0...warnings-ng-5.3.0) - 2019-7-4
+
+### Added 
+
+- [JENKINS-55051](https://issues.jenkins-ci.org/browse/JENKINS-55051),
+[PR#116](https://github.com/jenkinsci/warnings-ng-plugin/pull/116): 
+Added DScanner parser
+
+## [5.2.1](https://github.com/jenkinsci/warnings-ng-plugin/compare/warnings-ng-5.2.0...warnings-ng-5.2.1) - 2019-7-1
+
+### Fixed
+- [JENKINS-58253](https://issues.jenkins-ci.org/browse/JENKINS-58253): Restored deprecated quality gate 
+properties so that old scripts will still work.
+
+## [5.2.0](https://github.com/jenkinsci/warnings-ng-plugin/compare/warnings-ng-5.1.0...warnings-ng-5.2.0) - 2019-6-27
+
+### Added 
+- [JENKINS-39203](https://issues.jenkins-ci.org/browse/JENKINS-39203),
+  [PR#58](https://github.com/jenkinsci/warnings-ng-plugin/pull/58): Mark only the failed stage as unstable if a quality gate
+  is failed. Other stages will not be affected anymore.
 - [JENKINS-57098](https://issues.jenkins-ci.org/browse/JENKINS-57098),
 [PR#177](https://github.com/jenkinsci/analysis-model/pull/177),
 [PR#168](https://github.com/jenkinsci/analysis-model/pull/168): 
@@ -16,7 +52,7 @@ Added a parser for MentorGraphcis Modelsim/Questa.
 - [JENKINS-57245](https://issues.jenkins-ci.org/browse/JENKINS-57245), [PR#111](https://github.com/jenkinsci/warnings-ng-plugin/pull/111):
   Added a Kotlin Parser.
 
-### Fixed 
+### Fixed
 - [JENKINS-56007](https://issues.jenkins-ci.org/browse/JENKINS-56007): Obtain the affected files in a process on the 
 master (rather than pushing them from the agent to the master) so that master - agent security will not block the copy process. 
 - Fix resetting of reference build in Firefox.
